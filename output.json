@@ -12,6 +12,7 @@
   "shopify.com": [
     "Cloudflare",
     "Google Workspace",
+    "SendGrid",
     "Shopify"
   ],
   "hubspot.com": [
@@ -51,8 +52,7 @@
     "HubSpot"
   ],
   "segment.com": [
-    "Google Workspace",
-    "HubSpot"
+    "Google Workspace"
   ],
   "hotjar.com": [
     "Google Workspace",

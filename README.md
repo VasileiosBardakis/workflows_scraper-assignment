@@ -1,7 +1,7 @@
 # Technographic Detector
 
 A small command-line tool that, given a list of domains, figures out which
-technologies each one uses by looking at publicly visible signals — response
+technologies each one uses by looking at publicly visible signals - response
 headers, script tags, cookies, DNS records, meta tags, and inline JavaScript.
 No headless browser, no paid APIs.
 
@@ -47,26 +47,25 @@ detected:
 }
 ```
 
-## Testing
+## Testing (Optional)
 
 ```
 python -m unittest discover -s tests -t .
 ```
 
 A small test suite (matcher, signals, fetcher, DNS) is included. It wasn't part
-of the assignment, but it's cheap insurance for keeping the tool
-production-ready.
+of the assignment, but it's cheap insurance for keeping the tool production-ready.
 
 ## Architecture
 
 Small, single-purpose modules that form a pipeline:
 
-- `fetcher.py` — async HTTP fetch (`httpx`)
-- `dns_lookup.py` — async DNS lookups (`dnspython`)
-- `signals.py` — turns a response + DNS results into a flat signal map
-- `matcher.py` — loads fingerprints and matches signals
-- `scanner.py` — ties it together with bounded concurrency
-- `main.py` — CLI entrypoint
+- `fetcher.py` - async HTTP fetch (`httpx`)
+- `dns_lookup.py` - async DNS lookups (`dnspython`)
+- `signals.py` - turns a response + DNS results into a flat signal map
+- `matcher.py` - loads fingerprints and matches signals
+- `scanner.py` - ties it together with bounded concurrency
+- `main.py` - CLI entrypoint
 
 ## Design decisions
 
@@ -88,7 +87,7 @@ lists). The upstream Wappalyzer object format is more sophisticated
 (`headers`/`cookies`/`dns`/`js`/`meta` as name-to-value maps,
 string-or-array values, `{"technologies": {...}}` wrapper).
 The assignment states the matcher should be extensible to the full ~7,500-entry
-fingerprint database, so the matcher is built to accept both dialects — the
+fingerprint database, so the matcher is built to accept both dialects - the
 supplied patterns work unchanged, and the full database can be dropped in
 without code changes.
 
@@ -97,3 +96,9 @@ inline-JS/endpoint patterns that don't occur in `<script src>` attributes, so
 GA4 is not detected by design. To make GA4 detectable, the `script` channel
 would need to also be matched against the text content of inline `<script>`
 tags (not just their `src` attributes), which would let `gtag\(` match.
+
+**Run-to-run variance.** Results can differ slightly between runs. Scanning
+the live web means soft-blocks, rate limiting, A/B tests and geo-redirects
+change what a homepage serves at any given moment, so a domain may show fewer
+(or no) detections on one run and more on the next. `output.json` is a
+point-in-time snapshot, not a stable fingerprint.
