@@ -1,0 +1,3 @@
+httpx
+dnspython
+beautifulsoup4
