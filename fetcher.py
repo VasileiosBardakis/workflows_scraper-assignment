@@ -28,11 +28,14 @@ async def fetch(domain, client):
         url = domain if "://" in domain else f"{scheme}://{domain}/"
         try:
             r = await client.get(url, follow_redirects=True)
+            cookies = {}
+            for resp in [*r.history, r]:
+                cookies.update(dict(resp.cookies.items()))
             return Response(
                 url=str(r.url),
                 status=r.status_code,
                 headers=dict(r.headers.items()),
-                cookies=dict(r.cookies.items()),
+                cookies=cookies,
                 body=r.text,
             )
         except httpx.HTTPError as e:

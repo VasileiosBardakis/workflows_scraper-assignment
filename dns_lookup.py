@@ -1,9 +1,6 @@
 import asyncio
-import logging
 
 import dns.resolver
-
-log = logging.getLogger(__name__)
 
 RECORD_TYPES = {
     "dns_mx": "MX",

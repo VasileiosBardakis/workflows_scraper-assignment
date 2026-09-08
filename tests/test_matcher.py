@@ -1,9 +1,9 @@
 import os
 import unittest
 
-from matcher import Matcher, load_fingerprints
+from matcher import Matcher, load_fingerprints, parse_fingerprints
 
-FINGERPRINTS_PATH = os.path.join(os.path.dirname(__file__), "fingerprints.json")
+FINGERPRINTS_PATH = os.path.join(os.path.dirname(__file__), "..", "fingerprints.json")
 
 
 class TestLoadFingerprints(unittest.TestCase):
@@ -52,6 +52,49 @@ class TestMatch(unittest.TestCase):
         )
         self.assertIn("Stripe", result)
         self.assertIn("Google Workspace", result)
+
+
+WAPPALYZER_SAMPLE = {
+    "technologies": {
+        "Example": {
+            "scripts": "cdn\\.example\\.com/script\\.js",
+            "headers": {"x-powered-by": "ExampleServer"},
+            "cookies": {"example_id": ""},
+            "js": {"ExampleGlobal": "1\\.2"},
+            "meta": {"generator": "Example"},
+            "dns": {"TXT": "example-verify"},
+        }
+    }
+}
+
+
+class TestWappalyzerFormat(unittest.TestCase):
+    def setUp(self):
+        self.matcher = Matcher(parse_fingerprints(WAPPALYZER_SAMPLE))
+
+    def match(self, **channels):
+        return self.matcher.match(channels)
+
+    def test_scripts_single_string(self):
+        self.assertIn("Example", self.match(script=["https://cdn.example.com/script.js"]))
+
+    def test_headers_object(self):
+        self.assertIn(
+            "Example",
+            self.match(header_values={"x-powered-by": "ExampleServer/2.1"}),
+        )
+
+    def test_cookies_object_empty_pattern(self):
+        self.assertIn("Example", self.match(cookie_values={"example_id": "abc"}))
+
+    def test_js_object(self):
+        self.assertIn("Example", self.match(js_values={"ExampleGlobal": "1.2"}))
+
+    def test_meta_object(self):
+        self.assertIn("Example", self.match(meta_values={"generator": "Example"}))
+
+    def test_dns_object(self):
+        self.assertIn("Example", self.match(dns_txt=["v=spf1 include:example-verify"]))
 
 
 if __name__ == "__main__":
