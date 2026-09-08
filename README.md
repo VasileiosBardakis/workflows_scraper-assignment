@@ -81,21 +81,34 @@ Small, single-purpose modules that form a pipeline:
 
 ## Notes
 
-**Bilingual fingerprint matcher.** The provided fingerprint subset uses a
-simplified channel model (`header`, `cookie`, `dns_txt`, etc. as regex-on-name
-lists). The upstream Wappalyzer object format is more sophisticated
-(`headers`/`cookies`/`dns`/`js`/`meta` as name-to-value maps,
-string-or-array values, `{"technologies": {...}}` wrapper).
-The assignment states the matcher should be extensible to the full ~7,500-entry
-fingerprint database, so the matcher is built to accept both dialects - the
-supplied patterns work unchanged, and the full database can be dropped in
-without code changes.
+### Requirement inconsistencies
 
-**Google Analytics 4.** The provided GA4 patterns (`gtag\(`, `g/collect`) are
-inline-JS/endpoint patterns that don't occur in `<script src>` attributes, so
-GA4 is not detected by design. To make GA4 detectable, the `script` channel
-would need to also be matched against the text content of inline `<script>`
-tags (not just their `src` attributes), which would let `gtag\(` match.
+A few things I noticed while implementing against the spec, collected here:
+
+- **"Wappalyzer format" vs. the format actually provided.** The spec says to
+  use the same pattern format as Wappalyzer, but the provided subset uses a
+  simplified channel model (`header`, `cookie`, `dns_txt`, etc. as regex lists)
+  instead of Wappalyzer's object format (`headers`/`cookies`/`dns`/`js`/`meta`
+  as name-to-value maps). The matcher accepts both dialects, so the supplied
+  subset works unchanged and further Wappalyzer-format fingerprints can be
+  added without code changes.
+
+- **Google Analytics 4 can never match as specified.** The GA4 patterns
+  (`google-analytics\.com/g/collect`, `gtag\(`) are inline-JS/network-endpoint
+  patterns, but the spec defines the `script` channel as `<script src>`
+  attributes, where neither pattern can appear - so GA4 is never detected.
+  In Wappalyzer's real format these belong to the `scripts` (inline JS source)
+  channel. I kept the fingerprints exactly as provided rather than
+  second-guessing the spec.
+
+- **Salesforce CNAME on the apex domain.** The spec asks for CNAME lookups on
+  the apex, but an apex domain cannot carry CNAME records (RFC - it already
+  holds SOA/NS), so `dns_cname` is always empty and the Salesforce fingerprint
+  can never match. Salesforce CNAMEs only exist on subdomains (e.g. `www`).
+  Implemented as specified.
+
+
+### Other notes
 
 **Run-to-run variance.** Results can differ slightly between runs. Scanning
 the live web means soft-blocks, rate limiting, A/B tests and geo-redirects
